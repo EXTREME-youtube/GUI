@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure GUI</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #121212;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+        }
+        .window {
+            width: 450px;
+            height: 350px;
+            background: #000000;
+            border-radius: 12px;
+            position: absolute;
+            top: 50px;
+            left: 50px;
+            border: 2px solid #555;
+            box-shadow: 5px 5px 20px rgba(0,0,0,0.5);
+            flex-direction: column;
+            resize: both;
+            overflow: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+        .title-bar {
+            background: linear-gradient(45deg, #444, #222);
+            color: white;
+            padding: 8px;
+            cursor: grab;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            font-weight: bold;
+        }
+        .buttons {
+            display: flex;
+        }
+        .btn {
+            background: #ffcc00;
+            color: black;
+            border: none;
+            padding: 8px 14px;
+            cursor: pointer;
+            margin-left: 5px;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: all 0.3s ease-in-out;
+        }
+        .btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0px 0px 10px rgba(255, 204, 0, 0.6);
+        }
+        .sidebar {
+            width: 120px;
+            background: #333;
+            padding: 10px;
+            height: 100%;
+            flex-shrink: 0;
+            display: none;
+        }
+        .tab {
+            padding: 12px;
+            cursor: pointer;
+            border-radius: 8px;
+            text-align: center;
+            background: #444;
+            margin-bottom: 8px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .tab:hover {
+            background: #555;
+            transform: scale(1.05);
+            box-shadow: 0px 0px 10px rgba(0, 255, 255, 0.5);
+        }
+        .active {
+            background: #666;
+            box-shadow: 0px 0px 10px rgba(255,255,255,0.3);
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+            background: #1a1a1a;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            transition: all 0.3s ease-in-out;
+        }
+        .window-container {
+            display: flex;
+            height: 100%;
+        }
+        .login-container {
+            padding: 20px;
+            text-align: center;
+
+        }
+        .login-container input {
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 16px;
+        }
+        .login-container button {
+            padding: 10px;
+            background: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        .login-container button:hover {
+            background: #666;
+        }
+        .toggle-container {
+        width: 60px;
+        height: 30px;
+        background: #555;
+        border-radius: 15px;
+        position: relative;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        padding: 4px;
+        transition: background 0.3s;
+    }
+
+    .toggle-dot {
+        width: 24px;
+        height: 24px;
+        background: white;
+        border-radius: 50%;
+        position: absolute;
+        left: 4px;
+        transition: left 0.3s;
+    }
+
+    .active {
+        background: green !important;
+    }
+
+    .active .toggle-dot {
+        left: 32px !important;
+    }
+
+    </style>
+</head>
+<body>
+
+    <div class="window" id="window">
+        <div class="title-bar" id="titleBar">
+            <span>Secure GUI</span>
+            <div class="buttons">
+                <button class="btn" id="toggleMinimize">–</button>
+                <button class="btn exit">✖</button>
+            </div>
+        </div>
+        <div class="window-container">
+            <div class="sidebar">
+                <div class="tab" onclick="showTab('home')">Home</div>
+                <div class="tab" onclick="showTab('settings')">Settings</div>
+                <div class="tab" onclick="showTab('about')">About</div>
+            </div>
+            <div class="content" id="content">
+                <div class="login-container" id="login">
+                    <h2>Enter Access Key</h2>
+                    <input type="password" id="keyInput" placeholder="Enter key">
+                    <button class="btn" onclick="checkKey()">Unlock</button>
+                    <p id="error" style="color: red; display: none;">❌ Incorrect key!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+      let secretKey = "12345";
+let rainbowInterval;
+let isMinimized = false;
+
+// Check if the access key was saved
+window.onload = function () {
+    let storedKey = localStorage.getItem("accessKey");
+    if (storedKey === secretKey) {
+        unlockGUI(); // Auto-unlock if key is valid
+    }
+};
+
+// Function to check the access key
+function checkKey() {
+    const userKey = document.getElementById("keyInput").value;
+
+    if (userKey === secretKey) {
+        localStorage.setItem("accessKey", userKey); // Save the key
+        unlockGUI();
+    } else {
+        document.getElementById("error").style.display = "block";
+    }
+}
+
+// Function to unlock the GUI
+function unlockGUI() {
+    document.getElementById("login").style.display = "none";
+    document.querySelector(".sidebar").style.display = "block";
+    showTab("home"); // Open the Home tab after login
+}
+
+// Function to switch tabs
+function showTab(tab) {
+    let tabContent = "";
+
+    if (tab === "home") {
+        tabContent = `
+            <p>Welcome to the Home tab! 🚀</p>
+            <div id="home-buttons">
+                <button class="btn" onclick="showAlert()">Show Alert</button>
+                <button class="btn" onclick="changeColor()">Change Background</button>
+                <button class="btn" onclick="updateText()">Update Text</button>
+                <p id="home-text">This is the default text.</p>
+            </div>
+        `;
+    } else if (tab === "settings") {
+        tabContent = `
+            <p>⚙️ Settings: Customize your experience.</p>
+            <div class="toggle-container" onclick="runJS()">
+                <div class="toggle-dot"></div>
+            </div>
+        `;
+    } else if (tab === "about") {
+        tabContent = "<p>ℹ️ About: Secure UI experiment.</p>";
+    }
+
+    document.getElementById("content").innerHTML = tabContent;
+}
+
+// Function to activate JavaScript toggle & rainbow effect
+function runJS() {
+    alert("🚀 JavaScript is running successfully!");
+
+    let toggle = document.querySelector(".toggle-container");
+
+    // Toggle active state
+    if (toggle.classList.contains("active")) {
+        toggle.classList.remove("active");
+        clearInterval(rainbowInterval);
+        document.querySelectorAll(".btn, .tab, .title-bar, .sidebar, .content").forEach(el => {
+            el.style.background = "";
+            el.style.border = "";
+            el.style.boxShadow = "";
+        });
+    } else {
+        toggle.classList.add("active");
+
+        // Start rainbow animation
+        let colors = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"];
+        let i = 0;
+
+        rainbowInterval = setInterval(() => {
+            document.querySelectorAll(".btn, .tab, .title-bar, .sidebar, .content").forEach(el => {
+                el.style.background = colors[i];
+                el.style.border = "2px solid white";
+                el.style.boxShadow = "0px 0px 8px rgba(255, 255, 255, 0.5)";
+            });
+            i = (i + 1) % colors.length;
+        }, 500);
+    }
+}
+
+// Function to minimize the window
+function toggleMinimize() {
+    let windowEl = document.getElementById("window");
+
+    if (!isMinimized) {
+        windowEl.style.height = "45px";
+        document.getElementById("toggleMinimize").innerText = "+";
+    } else {
+        windowEl.style.height = "350px";
+        document.getElementById("toggleMinimize").innerText = "–";
+    }
+
+    isMinimized = !isMinimized;
+}
+
+// Function to close the window
+function closeWindow() {
+    document.getElementById("window").style.display = "none";
+}
+
+// Attach event listeners
+document.getElementById("toggleMinimize").addEventListener("click", toggleMinimize);
+document.querySelector(".exit").addEventListener("click", closeWindow);
+
+// Button functionalities
+function showAlert() {
+    alert("🚀 You clicked the alert button!");
+}
+
+function changeColor() {
+    document.getElementById("home-buttons").style.background = "#444";
+}
+
+function updateText() {
+    document.getElementById("home-text").innerText = "✨ Text has been updated!";
+}
+    </script>
+</body>
+</html>
