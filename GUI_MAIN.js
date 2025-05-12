@@ -371,4 +371,3 @@
 
   gw.style.display = "none";
 })();
-</script>
