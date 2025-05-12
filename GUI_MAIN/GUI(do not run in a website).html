@@ -1,318 +1,374 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure GUI</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #121212;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: white;
-        }
-        .window {
-            width: 450px;
-            height: 350px;
-            background: #000000;
-            border-radius: 12px;
-            position: absolute;
-            top: 50px;
-            left: 50px;
-            border: 2px solid #555;
-            box-shadow: 5px 5px 20px rgba(0,0,0,0.5);
-            flex-direction: column;
-            resize: both;
-            overflow: hidden;
-            transition: all 0.3s ease-in-out;
-        }
-        .title-bar {
-            background: linear-gradient(45deg, #444, #222);
-            color: white;
-            padding: 8px;
-            cursor: grab;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-top-left-radius: 12px;
-            border-top-right-radius: 12px;
-            font-weight: bold;
-        }
-        .buttons {
-            display: flex;
-        }
-        .btn {
-            background: #ffcc00;
-            color: black;
-            border: none;
-            padding: 8px 14px;
-            cursor: pointer;
-            margin-left: 5px;
-            border-radius: 6px;
-            font-weight: bold;
-            transition: all 0.3s ease-in-out;
-        }
-        .btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0px 0px 10px rgba(255, 204, 0, 0.6);
-        }
-        .sidebar {
-            width: 120px;
-            background: #333;
-            padding: 10px;
-            height: 100%;
-            flex-shrink: 0;
-            display: none;
-        }
-        .tab {
-            padding: 12px;
-            cursor: pointer;
-            border-radius: 8px;
-            text-align: center;
-            background: #444;
-            margin-bottom: 8px;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-        .tab:hover {
-            background: #555;
-            transform: scale(1.05);
-            box-shadow: 0px 0px 10px rgba(0, 255, 255, 0.5);
-        }
-        .active {
-            background: #666;
-            box-shadow: 0px 0px 10px rgba(255,255,255,0.3);
-        }
-        .content {
-            flex-grow: 1;
-            padding: 20px;
-            background: #1a1a1a;
-            border-bottom-left-radius: 12px;
-            border-bottom-right-radius: 12px;
-            transition: all 0.3s ease-in-out;
-        }
-        .window-container {
-            display: flex;
-            height: 100%;
-        }
-        .login-container {
-            padding: 20px;
-            text-align: center;
-
-        }
-        .login-container input {
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 16px;
-        }
-        .login-container button {
-            padding: 10px;
-            background: #ff0000;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: background 0.3s;
-        }
-        .login-container button:hover {
-            background: #666;
-        }
-        .toggle-container {
-        width: 60px;
-        height: 30px;
-        background: #555;
-        border-radius: 15px;
-        position: relative;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        padding: 4px;
-        transition: background 0.3s;
+(function() {
+  const style = document.createElement('style');
+  style.textContent = `
+    #blooketGUIWindow {
+      width: 300px;
+      height: 200px;
+      border: 2px solid #333;
+      border-radius: 8px;
+      background-color: #222;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, .5);
+      position: fixed;
+      top: 50px;
+      left: 50px;
+      transition: transform .3s ease, opacity .3s ease;
+      display: none;
+      flex-direction: column;
+      cursor: grab;
+      z-index: 2000; /* High z-index */
     }
 
-    .toggle-dot {
-        width: 24px;
-        height: 24px;
-        background: white;
-        border-radius: 50%;
-        position: absolute;
-        left: 4px;
-        transition: left 0.3s;
+    #blooketGUITitlebar {
+      background-color: #444;
+      color: #fff;
+      padding: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+      width: 100%;
+      box-sizing: border-box;
     }
 
-    .active {
-        background: green !important;
+    #blooketGUITitlebar span {
+      flex-grow: 1;
+      margin-right: 10px;
     }
 
-    .active .toggle-dot {
-        left: 32px !important;
+    #blooketGUITitlebar button {
+      background: none;
+      border: none;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      margin-left: 5px;
+      padding: 5px 8px;
+      border-radius: 3px;
+      transition: transform .2s ease, box-shadow .3s ease;
     }
 
-    </style>
-</head>
-<body>
+    #blooketGUITitlebar button:hover {
+      background-color: #555;
+      transform: scale(1.1);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, .3);
+    }
 
-    <div class="window" id="window">
-        <div class="title-bar" id="titleBar">
-            <span>Secure GUI</span>
-            <div class="buttons">
-                <button class="btn" id="toggleMinimize">–</button>
-                <button class="btn exit">✖</button>
-            </div>
+    #blooketGUIContentArea {
+      display: flex;
+      flex-grow: 1;
+      flex-direction: row;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    #blooketGUISidebar {
+      width: 80px;
+      background: #444;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 10px;
+      box-sizing: border-box;
+    }
+
+    #blooketGUISidebar button {
+      background: #555;
+      border: 2px solid #777;
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 8px;
+      transition: background .3s, transform .1s, color .5s ease, border-color .5s ease;
+      width: 90%;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 6px;
+      box-sizing: border-box;
+    }
+
+    #blooketGUISidebar button:hover {
+      background: linear-gradient(to bottom, #666, #555);
+      transform: scale(1.1);
+      box-shadow: 0 3px 7px rgba(0, 0, 0, .5);
+    }
+
+    #blooketGUISidebar button.active {
+      background: #888;
+      border-color: #aaa;
+    }
+
+    .blooketGUIMainContent {
+      flex-grow: 1;
+      padding: 10px;
+      display: none;
+      color: #fff;
+      border-radius: 8px;
+      transition: background-color .5s ease, box-shadow .3s ease;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .blooketGUIMainContent.active {
+      display: block;
+      animation: blooketGUIFadeIn .3s ease-in-out;
+    }
+
+    @keyframes blooketGUIFadeIn {
+      from {
+        opacity: 0;
+        transform: translateX(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    #blooketGUIRestoreBtn {
+      display: none;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      padding: 8px 12px;
+      background: linear-gradient(45deg, #ff004c, #6b00ff);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      transition: transform .3s ease, box-shadow .3s ease, opacity .5s ease;
+      opacity: 0;
+      z-index: 2001; /* High z-index */
+    }
+
+    #blooketGUIRestoreBtn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 10px rgba(255, 0, 100, .8);
+    }
+
+    #blooketGUIRestoreBtn.pulsing {
+      animation: blooketGUIPulse 1.5s infinite;
+    }
+
+    @keyframes blooketGUIPulse {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 8px rgba(255, 0, 100, .5);
+      }
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(255, 0, 100, 1);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 8px rgba(255, 0, 100, .5);
+      }
+    }
+
+    #blooketGUIKeypad {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #333;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, .5);
+      z-index: 2002; /* Even higher z-index */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #fff;
+    }
+
+    #blooketGUIKeypad h3 {
+      margin-bottom: 10px;
+      font-size: 1.2em;
+    }
+
+    #blooketGUIKeypadInput {
+      margin-bottom: 15px;
+      padding: 10px;
+      border: 1px solid #555;
+      border-radius: 4px;
+      width: 150px;
+      background-color: #444;
+      color: #fff;
+    }
+
+    #blooketGUIKeypadButtons {
+      display: grid;
+      grid-template-columns: repeat(3, 50px);
+      grid-gap: 5px;
+      margin-bottom: 10px;
+    }
+
+    #blooketGUIKeypadButtons button {
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      background-color: #555;
+      color: #fff;
+      cursor: pointer;
+      transition: background-color .3s ease;
+      font-size: 1em;
+    }
+
+    #blooketGUIKeypadButtons button:hover {
+      background-color: #666;
+    }
+
+    #blooketGUIKeypadEnter {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      background: linear-gradient(to bottom, #4CAF50, #388E3C);
+      color: #fff;
+      cursor: pointer;
+      transition: background-color .3s ease;
+      font-size: 1em;
+      width: 100%;
+      text-align: center;
+    }
+
+    #blooketGUIKeypadEnter:hover {
+      background: linear-gradient(to bottom, #66BB6A, #43A047);
+    }
+
+    .blooketGUIErrorMessage {
+      color: red;
+      margin-top: 10px;
+      font-size: .9em;
+      display: none;
+    }
+  `;
+  document.head.appendChild(style);
+
+  const guiDiv = document.createElement('div');
+  guiDiv.innerHTML = `
+    <div id="blooketGUIWindow">
+      <div id="blooketGUITitlebar"><span>My GUI</span><div><button id="blooketGUIMinimizeBtn">−</button><button id="blooketGUICloseBtn">×</button></div></div>
+      <div id="blooketGUIContentArea">
+        <div id="blooketGUISidebar">
+          <button class="blooketGUITabButton active" data-tab="blooketGUIHome">Home</button>
+          <button class="blooketGUITabButton" data-tab="blooketGUITab1">Tab 1</button>
+          <button class="blooketGUITabButton" data-tab="blooketGUITab2">Tab 2</button>
         </div>
-        <div class="window-container">
-            <div class="sidebar">
-                <div class="tab" onclick="showTab('home')">Home</div>
-                <div class="tab" onclick="showTab('settings')">Settings</div>
-                <div class="tab" onclick="showTab('about')">About</div>
-            </div>
-            <div class="content" id="content">
-                <div class="login-container" id="login">
-                    <h2>Enter Access Key</h2>
-                    <input type="password" id="keyInput" placeholder="Enter key">
-                    <button class="btn" onclick="checkKey()">Unlock</button>
-                    <p id="error" style="color: red; display: none;">❌ Incorrect key!</p>
-                </div>
-            </div>
-        </div>
+        <div class="blooketGUIMainContent active" id="blooketGUIHome"><h3>Home</h3><p>Welcome!</p></div>
+        <div class="blooketGUIMainContent" id="blooketGUITab1"><h3>Tab 1</h3><p>Content 1.</p></div>
+        <div class="blooketGUIMainContent" id="blooketGUITab2"><h3>Tab 2</h3><p>Content 2.</p></div>
+      </div>
     </div>
+    <button id="blooketGUIRestoreBtn">Restore</button>
+    <div id="blooketGUIKeypad">
+      <h3>Enter Key</h3>
+      <input type="password" id="blooketGUIKeypadInput" maxlength="4">
+      <div id="blooketGUIKeypadButtons">
+        <button>1</button><button>2</button><button>3</button>
+        <button>4</button><button>5</button><button>6</button>
+        <button>7</button><button>8</button><button>9</button>
+        <button>*</button><button>0</button><button>#</button>
+      </div>
+      <button id="blooketGUIKeypadEnter">Enter</button>
+      <p class="blooketGUIErrorMessage">Incorrect Key</p>
+    </div>
+  `;
+  document.body.appendChild(guiDiv);
 
-    <script>
-      let secretKey = "12345";
-let rainbowInterval;
-let isMinimized = false;
+  let isDragging = false, offsetX, offsetY, initialWidth = 300, initialSidebarWidth = 80;
+  const $ = (id) => document.getElementById(id);
+  const gw = $("blooketGUIWindow");
+  const tb = $("blooketGUITitlebar");
+  const sb = $("blooketGUISidebar");
+  const sbbs = document.querySelectorAll(".blooketGUITabButton");
+  const mcs = document.querySelectorAll(".blooketGUIMainContent");
+  const mb = $("blooketGUIMinimizeBtn");
+  const cb = $("blooketGUICloseBtn");
+  const rb = $("blooketGUIRestoreBtn");
+  const kp = $("blooketGUIKeypad");
+  const ki = $("blooketGUIKeypadInput");
+  const kbs = document.querySelectorAll("#blooketGUIKeypadButtons button");
+  const ke = $("blooketGUIKeypadEnter");
+  const em = document.querySelector(".blooketGUIErrorMessage");
+  const ckey = "1234";
 
-// Check if the access key was saved
-window.onload = function () {
-    let storedKey = localStorage.getItem("accessKey");
-    if (storedKey === secretKey) {
-        unlockGUI(); // Auto-unlock if key is valid
-    }
-};
+  tb.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    gw.style.cursor = 'grabbing';
+    offsetX = e.clientX - gw.getBoundingClientRect().left;
+    offsetY = e.clientY - gw.getBoundingClientRect().top;
+  });
 
-// Function to check the access key
-function checkKey() {
-    const userKey = document.getElementById("keyInput").value;
+  document.addEventListener("mouseup", () => {
+    isDragging = false;
+    gw.style.cursor = 'grab';
+  });
 
-    if (userKey === secretKey) {
-        localStorage.setItem("accessKey", userKey); // Save the key
-        unlockGUI();
+  document.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    gw.style.left = e.clientX - offsetX + "px";
+    gw.style.top = e.clientY - offsetY + "px";
+  });
+
+  const st = (tn, btn) => {
+    mcs.forEach(el => el.classList.remove("active"));
+    sbbs.forEach(button => button.classList.remove("active"));
+    $(tn).classList.add("active");
+    btn.classList.add("active");
+  };
+
+  const minimizeGUI = () => {
+    initialWidth = gw.offsetWidth;
+    initialSidebarWidth = sb.offsetWidth;
+    gw.classList.add("minimized");
+    gw.style.width = "100px";
+    sb.style.width = "100px";
+    setTimeout(() => {
+      gw.style.display = "none";
+      rb.style.display = "block";
+      setTimeout(() => rb.style.opacity = "1", 100);
+      rb.classList.add("pulsing");
+    }, 300);
+  };
+
+  const restoreGUI = () => {
+    gw.style.display = "block";
+    gw.style.width = initialWidth + "px";
+    sb.style.width = initialSidebarWidth + "px";
+    setTimeout(() => gw.classList.remove("minimized"), 50);
+    rb.style.opacity = "0";
+    setTimeout(() => rb.style.display = "none", 500);
+    rb.classList.remove("pulsing");
+  };
+
+  const closeGUI = () => {
+    gw.style.display = "none";
+    rb.style.display = "none";
+  };
+
+  mb.onclick = minimizeGUI;
+  cb.onclick = closeGUI;
+  rb.onclick = restoreGUI;
+  sbbs.forEach(button => button.addEventListener('click', () => st(button.dataset.tab, button)));
+  kbs.forEach(button => {
+    button.addEventListener('click', () => {
+      ki.value += button.textContent;
+    });
+  });
+
+  ke.addEventListener('click', () => {
+    if (ki.value === ckey) {
+      kp.style.display = "none";
+      gw.style.display = "block";
     } else {
-        document.getElementById("error").style.display = "block";
+      em.style.display = "block";
+      ki.value = "";
+      setTimeout(() => em.style.display = "none", 2000);
     }
-}
+  });
 
-// Function to unlock the GUI
-function unlockGUI() {
-    document.getElementById("login").style.display = "none";
-    document.querySelector(".sidebar").style.display = "block";
-    showTab("home"); // Open the Home tab after login
-}
-
-// Function to switch tabs
-function showTab(tab) {
-    let tabContent = "";
-
-    if (tab === "home") {
-        tabContent = `
-            <p>Welcome to the Home tab! 🚀</p>
-            <div id="home-buttons">
-                <button class="btn" onclick="showAlert()">Show Alert</button>
-                <button class="btn" onclick="changeColor()">Change Background</button>
-                <button class="btn" onclick="updateText()">Update Text</button>
-                <p id="home-text">This is the default text.</p>
-            </div>
-        `;
-    } else if (tab === "settings") {
-        tabContent = `
-            <p>⚙️ Settings: Customize your experience.</p>
-            <div class="toggle-container" onclick="runJS()">
-                <div class="toggle-dot"></div>
-            </div>
-        `;
-    } else if (tab === "about") {
-        tabContent = "<p>ℹ️ About: Secure UI experiment.</p>";
-    }
-
-    document.getElementById("content").innerHTML = tabContent;
-}
-
-// Function to activate JavaScript toggle & rainbow effect
-function runJS() {
-    alert("🚀 JavaScript is running successfully!");
-
-    let toggle = document.querySelector(".toggle-container");
-
-    // Toggle active state
-    if (toggle.classList.contains("active")) {
-        toggle.classList.remove("active");
-        clearInterval(rainbowInterval);
-        document.querySelectorAll(".btn, .tab, .title-bar, .sidebar, .content").forEach(el => {
-            el.style.background = "";
-            el.style.border = "";
-            el.style.boxShadow = "";
-        });
-    } else {
-        toggle.classList.add("active");
-
-        // Start rainbow animation
-        let colors = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"];
-        let i = 0;
-
-        rainbowInterval = setInterval(() => {
-            document.querySelectorAll(".btn, .tab, .title-bar, .sidebar, .content").forEach(el => {
-                el.style.background = colors[i];
-                el.style.border = "2px solid white";
-                el.style.boxShadow = "0px 0px 8px rgba(255, 255, 255, 0.5)";
-            });
-            i = (i + 1) % colors.length;
-        }, 500);
-    }
-}
-
-// Function to minimize the window
-function toggleMinimize() {
-    let windowEl = document.getElementById("window");
-
-    if (!isMinimized) {
-        windowEl.style.height = "45px";
-        document.getElementById("toggleMinimize").innerText = "+";
-    } else {
-        windowEl.style.height = "350px";
-        document.getElementById("toggleMinimize").innerText = "–";
-    }
-
-    isMinimized = !isMinimized;
-}
-
-// Function to close the window
-function closeWindow() {
-    document.getElementById("window").style.display = "none";
-}
-
-// Attach event listeners
-document.getElementById("toggleMinimize").addEventListener("click", toggleMinimize);
-document.querySelector(".exit").addEventListener("click", closeWindow);
-
-// Button functionalities
-function showAlert() {
-    alert("🚀 You clicked the alert button!");
-}
-
-function changeColor() {
-    document.getElementById("home-buttons").style.background = "#444";
-}
-
-function updateText() {
-    document.getElementById("home-text").innerText = "✨ Text has been updated!";
-}
-    </script>
-</body>
-</html>
+  gw.style.display = "none";
+})();
+</script>
